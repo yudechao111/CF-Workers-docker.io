@@ -1,5 +1,4 @@
 // _worker.js
-
 // Docker镜像仓库主机地址
 let hub_host = 'registry-1.docker.io';
 // Docker认证服务器地址
@@ -105,8 +104,8 @@ async function searchInterface() {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<style>
 		:root {
-			--github-color: #f0f6fc;
-			--githubbj-color: #010409;
+			--github-color: f0f6fc;
+			--githubbj-color: 010409;
 		}
 		
 		* {
@@ -119,11 +118,11 @@ async function searchInterface() {
 			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 			display: flex;
 			flex-direction: column;
-			justify-content: center; // 新增
+			justify-content: center;
 			align-items: center;
 			min-height: 100vh;
 			margin: 0;
-			background: linear-gradient(120deg, #1a90ff 0%, #003eb3 100%);
+			background: linear-gradient(120deg, 1a90ff 0%, 003eb3 100%);
 			padding: 20px;
 		}
 
@@ -132,11 +131,11 @@ async function searchInterface() {
 			width: 100%;
 			max-width: 800px;
 			padding: 0 20px;
-			margin: 0 auto; // 修改
-			display: flex; // 新增
-			flex-direction: column; // 新增
-			justify-content: center; // 新增
-			min-height: 70vh; // 新增
+			margin: 0 auto;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			min-height: 70vh;
 		}
 
 		.github-corner {
@@ -238,7 +237,7 @@ async function searchInterface() {
 		}
 		#search-button {
 			padding: 0 25px;
-			background-color: #0066ff;
+			background-color: 0066ff;
 			border: none;
 			border-radius: 0 8px 8px 0;
 			cursor: pointer;
@@ -249,7 +248,7 @@ async function searchInterface() {
 			justify-content: center;
 		}
 		#search-button:hover {
-			background-color: #0052cc;
+			background-color: 0052cc;
 			transform: translateY(-1px);
 		}
 		#search-button svg {
@@ -264,7 +263,7 @@ async function searchInterface() {
 		@media (max-width: 480px) {
 			.container {
 				padding: 0 15px;
-				min-height: 60vh; // 新增
+				min-height: 60vh;
 			}
 			.github-corner svg {
 				width: 60px;
@@ -340,8 +339,16 @@ async function searchInterface() {
 
 export default {
 	async fetch(request, env, ctx) {
-		const getReqHeader = (key) => request.headers.get(key); // 获取请求头
 
+		// ====================== 已为你加上认证 ======================
+		const DOCKER_USER = env.DOCKER_USER || "";
+		const DOCKER_PAT  = env.DOCKER_PAT || "";
+		if (DOCKER_USER && DOCKER_PAT) {
+			request.headers.set('Authorization', `Basic ${btoa(`${DOCKER_USER}:${DOCKER_PAT}`)}`);
+		}
+		// ==========================================================
+
+		const getReqHeader = (key) => request.headers.get(key); // 获取请求头
 		let url = new URL(request.url); // 解析请求URL
 		const userAgentHeader = request.headers.get('User-Agent');
 		const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
@@ -482,7 +489,7 @@ export default {
 		// 处理重定向
 		if (new_response_headers.get("Location")) {
 			const location = new_response_headers.get("Location");
-			console.info(`Found redirection location, redirecting to ${location}`);
+			console.info(`Found redirection location: ${location}`);
 			return httpHandler(request, location, hub_host);
 		}
 
@@ -527,7 +534,7 @@ function httpHandler(req, pathname, baseHost) {
 	const reqInit = {
 		method: req.method,
 		headers: reqHdrNew,
-		redirect: 'follow',
+		redirect: "follow",
 		body: req.body
 	};
 	return proxy(urlObj, reqInit, rawLen);
@@ -536,7 +543,7 @@ function httpHandler(req, pathname, baseHost) {
 /**
  * 代理请求
  * @param {URL} urlObj URL对象
- * @param {RequestInit} reqInit 请求初始化对象
+ * @param {RequestInit} reqInit 请求初始化
  * @param {string} rawLen 原始长度
  */
 async function proxy(urlObj, reqInit, rawLen) {
@@ -551,15 +558,16 @@ async function proxy(urlObj, reqInit, rawLen) {
 
 		if (badLen) {
 			return makeRes(res.body, 400, {
-				'--error': `bad len: ${newLen}, except: ${rawLen}`,
+				'--error': `bad len: ${newLen}`,
 				'access-control-expose-headers': '--error',
 			});
 		}
 	}
 	const status = res.status;
-	resHdrNew.set('access-control-expose-headers', '*');
-	resHdrNew.set('access-control-allow-origin', '*');
-	resHdrNew.set('Cache-Control', 'max-age=1500');
+	resHdrNew.set("Access-Control-Allow-Origin", "*");
+	resHdrNew.set("Access-Control-Allow-Methods", "*");
+	resHdrNew.set("Access-Control-Allow-Headers", "*");
+	resHdrNew.set("Cache-Control", "max-age=1500");
 
 	// 删除不必要的头
 	resHdrNew.delete('content-security-policy');
@@ -573,9 +581,8 @@ async function proxy(urlObj, reqInit, rawLen) {
 }
 
 async function ADD(envadd) {
-	var addtext = envadd.replace(/[	 |"'\r\n]+/g, ',').replace(/,+/g, ',');	// 将空格、双引号、单引号和换行符替换为逗号
+	var addtext = envadd.replace(/[	 |"'\r\n]+/g, ',').replace(/,+/g, ',');
 	if (addtext.charAt(0) == ',') addtext = addtext.slice(1);
-	if (addtext.charAt(addtext.length - 1) == ',') addtext = addtext.slice(0, addtext.length - 1);
-	const add = addtext.split(',');
-	return add;
+	if (addtext.length && addtext.charAt(addtext.length - 1) == ',') addtext = addtext.slice(0, -1);
+	return addtext.split(',');
 }
