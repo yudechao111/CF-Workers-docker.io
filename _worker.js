@@ -104,8 +104,8 @@ async function searchInterface() {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<style>
 		:root {
-			--github-color: f0f6fc;
-			--githubbj-color: 010409;
+			--github-color: #f0f6fc;
+			--githubbj-color: #010409;
 		}
 		
 		* {
@@ -122,7 +122,7 @@ async function searchInterface() {
 			align-items: center;
 			min-height: 100vh;
 			margin: 0;
-			background: linear-gradient(120deg, 1a90ff 0%, 003eb3 100%);
+			background: linear-gradient(120deg, #1a90ff 0%, #003eb3 100%);
 			padding: 20px;
 		}
 
@@ -237,7 +237,7 @@ async function searchInterface() {
 		}
 		#search-button {
 			padding: 0 25px;
-			background-color: 0066ff;
+			background-color: #0066ff;
 			border: none;
 			border-radius: 0 8px 8px 0;
 			cursor: pointer;
@@ -248,7 +248,7 @@ async function searchInterface() {
 			justify-content: center;
 		}
 		#search-button:hover {
-			background-color: 0052cc;
+			background-color: #0052cc;
 			transform: translateY(-1px);
 		}
 		#search-button svg {
@@ -340,13 +340,17 @@ async function searchInterface() {
 export default {
 	async fetch(request, env, ctx) {
 
-		// ====================== 已为你加上认证 ======================
-		const DOCKER_USER = env.DOCKER_USER || "";
-		const DOCKER_PAT  = env.DOCKER_PAT || "";
-		if (DOCKER_USER && DOCKER_PAT) {
-			request.headers.set('Authorization', `Basic ${btoa(`${DOCKER_USER}:${DOCKER_PAT}`)}`);
-		}
-		// ==========================================================
+		// ====================== 认证代码（兼容、不报错、安全） ======================
+		try {
+			const DOCKER_USER = env.DOCKER_USER || "";
+			const DOCKER_PAT  = env.DOCKER_PAT || "";
+			if (DOCKER_USER && DOCKER_PAT) {
+				const authString = `${DOCKER_USER}:${DOCKER_PAT}`;
+				const base64Auth = btoa(authString);
+				request.headers.set('Authorization', `Basic ${base64Auth}`);
+			}
+		} catch (e) {}
+		// ========================================================================
 
 		const getReqHeader = (key) => request.headers.get(key); // 获取请求头
 		let url = new URL(request.url); // 解析请求URL
